@@ -1,0 +1,80 @@
+
+
+
+import fetch from 'node-fetch';
+import translate from '@vitalets/google-translate-api'
+const defaultLang = 'id'
+
+let handler = async (m, { conn, text }) => {
+    if (text.startsWith("char ")) {
+try {
+   const M = text.slice(5);
+    let apiUrl = `https://koyio.rest/characters/${M}`;
+    let response = await fetch(apiUrl);
+    let responseData = await response.json();
+    let ress = await translate (responseData.quote, { to: defaultLang, autoCorrect: true }).catch(_ => null)
+    let kzt = `
+┌──「 *WUWA CHARS* 
+▢ *Name:* ${responseData.name}
+▢ *Rarity:* ${responseData.rarity}
+▢ *Birth Day:* ${responseData.birthday}
+▢ *Birth Place:* ${responseData.birthplace}
+▢ *Attribute:* ${responseData.attribute}
+▢ *Class:* ${responseData.class}
+▢ *Weapon:* ${responseData.weapon}
+
+▢ *Qoute:* ${responseData.quote}
+└────────────`
+conn.sendMessage(m.chat, {text: kzt,
+    contextInfo: {
+    externalAdReply: {
+    title: responseData.name,
+    body: responseData.birthday,
+    thumbnailUrl: `https://koyio.rest/characters/${M}/portrait`,
+    sourceUrl: '',
+    mediaType: 1,
+    }
+    }
+    },
+    {qouted:m},
+    );
+    } catch {
+   throw `Char tidak temukan\nChar yang tersedia untuk saat ini:\n"Calcharo",\n"Encore",\n"Jianxin",\n"Jiyan",\n"Lingyang",\n"Rover",\n"Verina",\n"Yinlin",\n"Aalto",\n"Baizhi",\n"Chixia",\n"Danjin",\n"Mortefi",\n"Sanhua",\n"Taoqi",\n"Yangyang",\n"Yuanwu"\n\nTolong menggunakan huruf kecil semua`
+    }
+    } else {
+    if (text.startsWith("atribut ")) {
+try{
+   const A = text.slice(8);
+    let aiUrl = `https://koyio.rest/attributes/${A}`;
+    let responsw = await fetch(aiUrl);
+    let responsq = await responsw.json();
+    let tod = await `List Chars with attribut ${A}\n` + responsq.characters.map((v, i) => {
+            return `
+_*❃ ${i + 1}.name : ${v.name}*_
+`.trim()
+        }).join('\n')
+        conn.sendMessage(m.chat, {text: tod,
+    contextInfo: {
+    externalAdReply: {
+    title: '',
+    body: '',
+    thumbnailUrl: `https://koyio.rest/attributes/${A}/icon`,
+    sourceUrl: '',
+    mediaType: 1,
+    }
+    }
+    },
+    {qouted:m},
+    )
+    } catch (hm) {
+    m.reply(`Atribut tidak di temukan\n Atribut yang tersedia saat ini:\n"Fusion",\n"Glacio",\"Aero",\n"Electro",\n"Spectro",\n"Havoc"\nJangan memakai huruf kapital !!`)
+   }
+     } else {
+     throw 'Invalid ".wuwa" command.\nGunakan:\n.wuwa char ```<nama>```\n.wuwa atribut ```<atribut>```\n'
+     }
+     }
+     }
+handler.help = ['wuwa [char,atribut]'];
+handler.tags = ['wuwa'];
+handler.command = ['wuwa'];
+export default handler;

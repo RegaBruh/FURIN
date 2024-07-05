@@ -1,0 +1,27 @@
+import fetch from 'node-fetch'
+import uploadImage from '../lib/uploadImage.js'
+
+
+let handler = async (m, { conn, usedPrefix, command, args }) => {
+let q = m.quoted ? m.quoted : m
+let mime = (q.msg || q).mimetype || ''
+if (!mime) throw 'Send Media Nya Kak Dengan Caption Color'
+let media = await q.download()
+let url = await uploadImage(media)
+let anu = await fetch(`https://api.itsrose.life/image/recolor?url=${url}&json=true&apikey=${global.rose}`)
+let hasil = await anu.json()
+await conn.sendMessage(
+		m.chat,
+		{
+			image: Buffer.from(hasil.base64Image, "base64"),
+			caption: `_Nih Kak Hasilnya_`,
+		},
+		{ quoted: m }
+	);
+}
+handler.help = ['recolor2']
+handler.tags = ['ai']
+handler.command = /^(recolor2)$/i
+handler.limit = true
+
+export default handler

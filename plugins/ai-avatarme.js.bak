@@ -1,0 +1,19 @@
+const { data } = await axios
+		.request({
+			baseURL: "https://api.itsrose.life",
+			url: "/image/avatarMe",
+			method: "POST",
+			params: { apikey: "" },
+			data: {
+				init_image: "https://...",
+				style: "",
+				skin: "default",
+				gender: "male|female"
+			},
+		})
+		.catch((e) => e?.response);
+const { status, message, result, styles, genders } = data;
+if (!status) {
+	return console.log({ data })
+}
+console.log(result["images"])

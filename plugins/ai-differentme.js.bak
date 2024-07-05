@@ -1,0 +1,97 @@
+import axios from "axios";
+
+const danil = async (m, { conn, args, usedPrefix, command }) => {
+	// Create temporary variable in conn; queque, to avoid spam.
+	conn.differentMe = conn.differentMe ? conn.differentMe : {};
+
+	if (m.sender in conn.differentMe) {
+		return m.reply("Please wait, you have undone job.");
+	}
+
+	const q = m.quoted ? m.quoted : m;
+	const mime = (q.msg || q).mimetype || q.mediaType || "";
+	if (!mime) {
+		return m.reply(`reply/send image with caption *${usedPrefix + command}*`);
+	}
+
+	// supported image mimetype is JPG/JPEG/PNG
+	if (!/image\/(jpe?g|png)/.test(mime)) {
+		return m.reply(`Unsupported file!`);
+	}
+
+	// assign user to temporary variable; queque, to avoid spam.
+	conn["differentMe"][m.sender] = true;
+
+	// Example used styles.
+	const [style = "anime"] = args;
+
+	// send text to user; if the image is being generate
+	m.reply(`_Generating image using style ${style}_`);
+
+	// Find your way to get image buffer
+	const imgBuffer = await q.download();
+
+	// Using node version 18x (IMPORTANT !)
+	const form = new FormData();
+
+	const blob = new Blob([imgBuffer], { type: "image/jpg" });
+	form.append("file", blob, "image.jpg");
+
+	/** or using module form-data; CommonJS
+	const formData = require("form-data");
+	const form = new formData
+
+	form.append("file", Buffer.from(imgBuffer), {
+		contentType: "image/jpg",
+		filename: "image.jpg"
+	})
+	*/
+
+	const { data } = await axios
+		.request({
+			baseURL: APIs["rose"], // "https://api.itsrose.site"
+			url: "/image/differentMe",
+			method: "POST",
+			params: {
+				style,
+				json: true, // false
+				apikey: APIKeys[APIs["rose"]],
+			},
+			data: form,
+		}).catch((e) => e?.response);
+	
+	const { status, result, message, styles } = data;
+	if (!status) {
+		delete conn.differentMe[m.sender];
+		let count = 1,extra_msg = "";
+		if (styles && Array.isArray(styles)) {
+			extra_msg += " Here available styles\n\n"
+			for (const id of styles) {
+				extra_msg += `${count}. ${id}\n`;
+				count += 1;
+			}
+		}
+		return await conn.sendMessage(
+			m.chat,
+			{
+				text: message + extra_msg,
+			},
+			{ quoted: m }
+		);
+	}
+	await conn.sendMessage(
+		m.chat,
+		{
+			image: Buffer.from(result["base64Image"], "base64"),
+			caption: `_Different you_`,
+		},
+		{ quoted: m }
+	);
+	delete conn.differentMe[m.sender];
+};
+danil.help = ["differentme"];
+danil.tags = ["ai"];
+danil.command = ["differentme"];
+danil.group = true;
+
+export default danil;
